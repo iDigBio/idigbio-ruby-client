@@ -1,7 +1,7 @@
 require 'mechanize'
 require 'json'
 require 'pry-byebug'
-$max_returns = 5000
+$max_limit = 100000
 
 class Hash 
     #
@@ -15,18 +15,16 @@ end
 module Idb
     class API
         
-        attr_accessor :search, :summary
-        
         def initialize
             @host = 'https://beta-search.idigbio.org/v2/'
             @client = Mechanize.new 
         end   
         
-        def query path='', params={}, options={method: 'post'}
+        def query path='', params={}, method='post'
             begin
-                if(options[:method]=='post')
+                if(method=='post')
                     resp = @client.post(@host+path, params.to_json , 'Content-Type' => 'application/json')
-                elsif(options[:method]=='get')
+                elsif(method=='get')
                     resp = @client.get(@host+path, params.to_json)
                 end
 
@@ -40,55 +38,48 @@ module Idb
             end
         end 
         
-        def search path='records/', params={limit: $max_returns}
-            params.symbolize
-            limits=[]
-            offsets=[]
-            offset= (params.key?(:offset) ? params[:offset] : 0)
-            results=[]
-            limit= (params.key?(:limit) ? params[:limit] : $max_returns)
-            total = count_records(params)
-
-            while results.length < total && () 
-            if (total > $max_returns || (offset+limit)<total)
-                div = (total-offset).divmod($max_returns)
-                offsets<<offset
-                div[0].times do |i|
-                    break if $max_returns*i>total || ($max_returns*(i+1))+offset < total
-                    limits << $max_returns 
-                    offsets << ($max_returns*(i+1))+offset
-                end
-                limits<< div[1] > limit ? limit : div[1]
-=begin
-            elsif !params.key? :limit && total > $max_returns && offset+$max_returns<total
-                i=0
-                while (i*$max_returns < total) do
-                    limits<<$max_returns
-                    offsets<<($max_returns*i)+offset
-                    i+=1
-                end 
-=end
-            else
-                limits<<$max_returns
-                offsets<<offset
-            end
-            binding.pry
+        def search(path: 'records/', params: {rq: {}, limit: $max_limit, offset: 0})
+            orglimit=params[:limit]
+            results={}
             out=[]
-            more=false
+            more=true
             begin 
                 query('search/'+path,params) do |resp|
                     if resp['itemCount'] > 0
                         out.concat resp['items']
                     end
+                    if (resp['itemCount'] > out.length && out.length < orglimit && out.length + params[:offset] < resp['itemCount']) || (out.length < resp['itemCount'] && orglimit > resp['itemCount'])
+                        params[:offset]+=resp['items'].length
+                        params[:limit]-=resp['items'].length
+                        more=true
+                    else
+                        results=resp
+                        results['items']=out
+                        more=false
+                    end
                 end
-            end while more
+            end while more 
+
+            if block_given?
+                yield results
+            else
+                return results
+            end
         end
 
-        def search_records params
-            search('records/',params)
+        def search_records rq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: []
+            params={rq: rq, limit: limit, offset: offset}
+            params[:fields]=fields if fields.empty? == false
+            params[:fields_exclude]=fields_exclude if fields_exclude.empty? == false
+            params[:sort]=sort if sort.empty? == false
+            search(path: 'records/', params: params)
         end
 
-        def search_media params
+        def search_media rq: {}, mq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: []
+            params={rq: rq, mq: {}, limit: limit, offset: offset}
+            params[:fields]=fields if fields.empty? == false
+            params[:fields_exclude]=fields_exclude if fields_exclude.empty? == false
+            params[:sort]=sort if sort.empty? == false
             search('media/',params)
         end
 

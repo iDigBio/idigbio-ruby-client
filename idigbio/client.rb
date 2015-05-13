@@ -25,7 +25,7 @@ module Idigbio
                 if(method=='post')
                     resp = @client.post(@host+path, params.to_json , 'Content-Type' => 'application/json')
                 elsif(method=='get')
-                    resp = @client.get(@host+path, params.to_json)
+                    resp = @client.get(@host+path, params, nil, {'Content-Type' => 'application/json'})
                 end
 
                 if block_given?
@@ -70,7 +70,7 @@ module Idigbio
             end
         end
 
-        def search_records rq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: []
+        def search_records(rq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: [])
             params={rq: rq, limit: limit, offset: offset}
             params[:fields]=fields unless fields.empty?
             params[:fields_exclude]=fields_exclude unless fields_exclude.empty? 
@@ -78,7 +78,7 @@ module Idigbio
             search(path: 'records/', params: params)
         end
 
-        def search_media rq: {}, mq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: []
+        def search_media(rq: {}, mq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: [])
             params={rq: rq, mq: {}, limit: limit, offset: offset}
             params[:fields]=fields unless fields.empty?
             params[:fields_exclude]=fields_exclude unless fields_exclude.empty? 
@@ -86,7 +86,7 @@ module Idigbio
             search(path: 'media/', params: params)
         end
 
-        def summary path='', params
+        def summary(path: '', params: {})
             query('summary/'+path,params)
         end
 
@@ -94,8 +94,8 @@ module Idigbio
             query('summary/count/records/', params)['itemCount']
         end
 
-        def view_record uuid
-            query(path='view/records/'+uuid,{},{method: 'get'})
+        def view_record(uuid)
+            query(path='view/records/'+uuid,{},'get')
         end
     end
 end

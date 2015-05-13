@@ -18,4 +18,8 @@ class TestClient < Minitest::Test
     def test_media_search
         assert @client.search_media(rq: {genus: 'puma'})['items'].length >= 1
     end
+
+    def test_view_record
+        assert_equal 'd4ccd806-2fe5-49b3-af60-d4f1615a6fab', @client.view_record('d4ccd806-2fe5-49b3-af60-d4f1615a6fab')['uuid']
+    end
 end

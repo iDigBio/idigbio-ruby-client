@@ -12,8 +12,8 @@ class Hash
     end
 end
 
-module Idb
-    class API
+module Idigbio
+    class Client
         
         def initialize
             @host = 'https://beta-search.idigbio.org/v2/'
@@ -38,7 +38,10 @@ module Idb
             end
         end 
         
-        def search(path: 'records/', params: {rq: {}, limit: $max_limit, offset: 0})
+        def search(path: 'records/', params: {})
+            params[:rq]={} unless params.key? :rq 
+            params[:limit]=$max_limit unless params.key? :limit
+            params[:offset]=0 unless params.key? :offset
             orglimit=params[:limit]
             results={}
             out=[]
@@ -69,18 +72,18 @@ module Idb
 
         def search_records rq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: []
             params={rq: rq, limit: limit, offset: offset}
-            params[:fields]=fields if fields.empty? == false
-            params[:fields_exclude]=fields_exclude if fields_exclude.empty? == false
-            params[:sort]=sort if sort.empty? == false
+            params[:fields]=fields unless fields.empty?
+            params[:fields_exclude]=fields_exclude unless fields_exclude.empty? 
+            params[:sort]=sort unless sort.empty? 
             search(path: 'records/', params: params)
         end
 
         def search_media rq: {}, mq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: []
             params={rq: rq, mq: {}, limit: limit, offset: offset}
-            params[:fields]=fields if fields.empty? == false
-            params[:fields_exclude]=fields_exclude if fields_exclude.empty? == false
-            params[:sort]=sort if sort.empty? == false
-            search('media/',params)
+            params[:fields]=fields unless fields.empty?
+            params[:fields_exclude]=fields_exclude unless fields_exclude.empty? 
+            params[:sort]=sort unless sort.empty? 
+            search(path: 'media/', params: params)
         end
 
         def summary path='', params

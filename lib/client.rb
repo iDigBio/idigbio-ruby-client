@@ -90,7 +90,7 @@ module Idigbio
             end
         end
         ##
-        # Search iDigBio specimen records with named parameters
+        # Search iDigBio specimen records 
         # 
         # @param rq [Hash] see wiki for format
         # @param limit [Fixnum] defaults to 100000 
@@ -123,7 +123,7 @@ module Idigbio
         end
 
         ##
-        # Search iDigBio media records with named parameters
+        # Search iDigBio media records 
         #
         # @param rq [Hash] see wiki for format
         # @param mq [Hash] see wiki for format
@@ -195,15 +195,26 @@ module Idigbio
         def view_publisher(uuid='')
             query('view/publishers/'+uuid,{},'get')
         end
-
+        ##
+        # Gets total number of records matching rq
+        #
+        # @param rq [Hash] record query params
+        # @return [Fixnum] record count
         def count_records(rq={})
             query('summary/count/records/', {rq: rq})['itemCount']
         end
-
+        ##
+        # Gets total number of media records matching rq and mq
+        # 
+        # @param rq [Hash]
+        # @param mq [Hash]
+        # @return [Fixnum] media record count
+        #
         def count_media(rq={}, mq={})
             query('summary/count/media/', {rq: rq, mq: mq})['itemCount']
         end
-
+        ##
+        # 
         def top_records(rq={}, top_fields=[], count=10)
             params={rq: rq, count: count}
             params[:top_fields] = top_fields unless top_fields.empty?
@@ -215,26 +226,25 @@ module Idigbio
             params[:top_fields] = top_fields unless top_fields.empty?
             query('summary/top/media/', params)
         end
-=begin
-        def modified_records(rq: {})
+
+        def modified_records(rq={})
+            query('summary/modified/records/',{rq: rq})
+        end
+
+        def modified_media(rq={}, mq={})
+            query('summary/modified/media/',{rq: rq, mq: mq})
+        end
+
+        def date_histogram(rq={}, top_fields=[], count=10, date_field='', min_date='', max_date='', date_interval='')
 
         end
 
-        def modified_media(rq: {}, mq: {})
+        def stats(t='api', recordset='', min_date='', max_date='', date_interval='')
 
         end
 
-        def date_histogram(rq: {}, top_fields: [], count: 10, date_field: '', min_date: '', max_date: '', date_interval: '')
+        def fields(type='records')
 
         end
-
-        def stats(t: 'api', recordset: '', min_date: '', max_date: '', date_interval: '')
-
-        end
-
-        def fields(type: 'records')
-
-        end
-=end
     end
 end

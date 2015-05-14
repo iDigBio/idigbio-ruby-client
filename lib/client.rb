@@ -3,15 +3,6 @@ require 'json'
 require 'pry-byebug'
 $max_limit = 100000
 
-class Hash 
-    #
-    #shallow conversion of string keys to sym
-    ####
-    def symbolize
-        self.keys.each{|k| self[k.to_sym] = self.delete(k) }
-    end
-end
-
 module Idigbio
     class Client
         
@@ -161,7 +152,7 @@ module Idigbio
         # @return specimen record in JSON format
         #
         # record = idigbio.view_record('8a0c0ea9-4b10-44a7-8a0d-ab4e12d9f607')
-        def view_record(uuid)
+        def view_record(uuid: '')
             query('view/records/'+uuid,{},'get')
         end
         ##
@@ -171,7 +162,7 @@ module Idigbio
         # @return media record in JSON format
         #
         # record = idigbio.view_media('1ef39c60-ccda-4431-8a2e-8eba5203c6b4')
-        def view_media(uuid)
+        def view_media(uuid: '')
             query('view/mediarecords/'+uuid,{},'get')
         end
         ##
@@ -181,7 +172,7 @@ module Idigbio
         # @return recordset record in JSON format
         #
         # record = idigbio.view_recordset('b3976394-a174-4ceb-8d64-3a435d66bde6')
-        def view_recordset(uuid)
+        def view_recordset(uuid: '')
             query('view/recordsets/'+uuid,{},'get')
         end
         ##
@@ -191,7 +182,7 @@ module Idigbio
         # @return publisher record in JSON format
         #
         # record = idigbio.view_publisher('4e1beef9-d7c0-4ac0-87df-065bc5a55361')
-        def view_publisher(uuid)
+        def view_publisher(uuid: '')
             query('view/publishers/'+uuid,{},'get')
         end
 
@@ -200,11 +191,39 @@ module Idigbio
         end
 
         def count_media(rq: {}, mq: {})
-            query('summary/count/media/', {rq: :rq, mq: :mq})['itemCount']
+            query('summary/count/media/', {rq: rq, mq: mq})['itemCount']
         end
 
-        def summary(path: '', params: {})
-            query('summary/'+path,params)
+        def top_records(rq: {}, top_fields: [], count: 10)
+            params={rq: rq, count: count}
+            params[:top_fields] = top_fields unless top_fields.empty?
+            query('summary/top/records/', params)
+        end
+
+        def top_media(rq: {}, mq: {}, top_fields: [], count: 10)
+            params={rq: rq, mq: {}, count: count}
+            params[:top_fields] = top_fields unless top_fields.empty?
+            query('summary/top/media/', params)
+        end
+
+        def modified_records(rq: {})
+
+        end
+
+        def modified_media(rq: {}, mq: {})
+
+        end
+
+        def date_histogram(rq: {}, top_fields: [], count: 10, date_field: '', min_date: '', max_date: '', date_interval: '')
+
+        end
+
+        def stats(t: 'api', recordset: '', min_date: '', max_date: '', date_interval: '')
+
+        end
+
+        def fields(type: 'records')
+
         end
     end
 end

@@ -16,7 +16,7 @@ class TestClient < Minitest::Test
     end
 
     def test_record_search_with_block
-        @client.search_records(rq: {genus: 'puma'}) do |results|
+        @client.search_records(rq: {'genus': 'puma'}) do |results|
             assert results.key?('itemCount')
         end
     end
@@ -26,19 +26,19 @@ class TestClient < Minitest::Test
     end
 
     def test_view_record
-        assert_equal 'd4ccd806-2fe5-49b3-af60-d4f1615a6fab', @client.view_record('d4ccd806-2fe5-49b3-af60-d4f1615a6fab')['uuid']
+        assert_equal 'd4ccd806-2fe5-49b3-af60-d4f1615a6fab', @client.view_record(uuid:'d4ccd806-2fe5-49b3-af60-d4f1615a6fab')['uuid']
     end
 
     def test_view_media
-        assert_equal '2a4274aa-fd03-4753-9c69-3805de755516', @client.view_media('2a4274aa-fd03-4753-9c69-3805de755516')['uuid']
+        assert_equal '2a4274aa-fd03-4753-9c69-3805de755516', @client.view_media(uuid:'2a4274aa-fd03-4753-9c69-3805de755516')['uuid']
     end
 
     def test_view_recordset
-        assert_equal 'c2e06358-1f9f-463c-843f-446c0a37fbd0', @client.view_recordset('c2e06358-1f9f-463c-843f-446c0a37fbd0')['uuid']
+        assert_equal 'c2e06358-1f9f-463c-843f-446c0a37fbd0', @client.view_recordset(uuid:'c2e06358-1f9f-463c-843f-446c0a37fbd0')['uuid']
     end
 
     def test_view_publisher
-        assert_equal '4e1beef9-d7c0-4ac0-87df-065bc5a55361', @client.view_publisher('4e1beef9-d7c0-4ac0-87df-065bc5a55361')['uuid']
+        assert_equal '4e1beef9-d7c0-4ac0-87df-065bc5a55361', @client.view_publisher(uuid:'4e1beef9-d7c0-4ac0-87df-065bc5a55361')['uuid']
     end
 
     def test_count_records

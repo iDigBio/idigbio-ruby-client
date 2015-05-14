@@ -1,7 +1,13 @@
 require 'mechanize'
 require 'json'
-require 'pry-byebug'
+#require 'pry-byebug'
 $max_limit = 100000
+
+class Hash
+    def symbolize
+        self.keys.each{|k| self[k.to_sym]=self.delete k}
+    end
+end
 
 module Idigbio
     class Client
@@ -18,11 +24,11 @@ module Idigbio
         # @param params [Hash] of parameters to be passed to API (converted to JSON for POST queries)
         # @param method [String] HTTP method to use ('get' or 'post'[default])
         #
-        def query path='', params={}, method='post'
+        def query(path='', params={}, method='post')
             begin
-                if(method=='post')
+                if(method.downcase=='post')
                     resp = @client.post(@host+path, params.to_json , 'Content-Type' => 'application/json')
-                elsif(method=='get')
+                elsif(method.downcase=='get')
                     resp = @client.get(@host+path, params, nil, {'Content-Type' => 'application/json'})
                 end
 
@@ -51,7 +57,8 @@ module Idigbio
         #
         # results = idigbio.search(path:'records/', params)
         #
-        def search(path: 'records/', params: {})
+        def search(path='records/', params={})
+            params.symbolize
             params[:rq]={} unless params.key? :rq 
             params[:limit]=$max_limit unless params.key? :limit
             params[:offset]=0 unless params.key? :offset
@@ -101,18 +108,20 @@ module Idigbio
         #    puts results['itemCount']
         # end
         #
-        def search_records(rq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: [])
+
+        def search_records(rq={}, limit=$max_limit, offset=0, fields=[], fields_exclude=[], sort=[])
             params={rq: rq, limit: limit, offset: offset}
             params[:fields]=fields unless fields.empty?
             params[:fields_exclude]=fields_exclude unless fields_exclude.empty? 
             params[:sort]=sort unless sort.empty? 
-            results = search(path: 'records/', params: params)
+            results = search('records/', params)
             if block_given?
                 yield results
             else
                 return results
             end
         end
+
         ##
         # Search iDigBio media records with named parameters
         #
@@ -133,18 +142,19 @@ module Idigbio
         #    puts results['itemCount']
         # end
         #
-        def search_media(rq: {}, mq: {}, limit: $max_limit, offset: 0, fields: [], fields_exclude: [], sort: [])
+        def search_media(rq={}, mq={}, limit=$max_limit, offset=0, fields=[], fields_exclude=[], sort=[])
             params={rq: rq, mq: {}, limit: limit, offset: offset}
             params[:fields]=fields unless fields.empty?
             params[:fields_exclude]=fields_exclude unless fields_exclude.empty? 
             params[:sort]=sort unless sort.empty? 
-            results = search(path: 'media/', params: params)
+            results = search('media/', params)
             if block_given?
                 yield results
             else
                 return results
             end
         end
+
         ##
         # Get a specimen record with uuid
         #
@@ -152,7 +162,7 @@ module Idigbio
         # @return specimen record in JSON format
         #
         # record = idigbio.view_record('8a0c0ea9-4b10-44a7-8a0d-ab4e12d9f607')
-        def view_record(uuid: '')
+        def view_record(uuid='')
             query('view/records/'+uuid,{},'get')
         end
         ##
@@ -162,7 +172,7 @@ module Idigbio
         # @return media record in JSON format
         #
         # record = idigbio.view_media('1ef39c60-ccda-4431-8a2e-8eba5203c6b4')
-        def view_media(uuid: '')
+        def view_media(uuid='')
             query('view/mediarecords/'+uuid,{},'get')
         end
         ##
@@ -172,7 +182,7 @@ module Idigbio
         # @return recordset record in JSON format
         #
         # record = idigbio.view_recordset('b3976394-a174-4ceb-8d64-3a435d66bde6')
-        def view_recordset(uuid: '')
+        def view_recordset(uuid='')
             query('view/recordsets/'+uuid,{},'get')
         end
         ##
@@ -182,30 +192,30 @@ module Idigbio
         # @return publisher record in JSON format
         #
         # record = idigbio.view_publisher('4e1beef9-d7c0-4ac0-87df-065bc5a55361')
-        def view_publisher(uuid: '')
+        def view_publisher(uuid='')
             query('view/publishers/'+uuid,{},'get')
         end
 
-        def count_records(rq: {})
-            query('summary/count/records/', {rq: :rq})['itemCount']
+        def count_records(rq={})
+            query('summary/count/records/', {rq: rq})['itemCount']
         end
 
-        def count_media(rq: {}, mq: {})
+        def count_media(rq={}, mq={})
             query('summary/count/media/', {rq: rq, mq: mq})['itemCount']
         end
 
-        def top_records(rq: {}, top_fields: [], count: 10)
+        def top_records(rq={}, top_fields=[], count=10)
             params={rq: rq, count: count}
             params[:top_fields] = top_fields unless top_fields.empty?
             query('summary/top/records/', params)
         end
 
-        def top_media(rq: {}, mq: {}, top_fields: [], count: 10)
+        def top_media(rq={}, mq={}, top_fields=[], count=10)
             params={rq: rq, mq: {}, count: count}
             params[:top_fields] = top_fields unless top_fields.empty?
             query('summary/top/media/', params)
         end
-
+=begin
         def modified_records(rq: {})
 
         end
@@ -225,5 +235,6 @@ module Idigbio
         def fields(type: 'records')
 
         end
+=end
     end
 end

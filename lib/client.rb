@@ -51,7 +51,7 @@ module Idigbio
         # @return [Hash] the search results in JSON format 
         #
         # idigbio = Idigbio::Client.new
-        # idigbio.search(path: 'records/', params: {rq: {'genus': 'acer'}, offset: 100, limit: 200}) do |results|
+        # idigbio.search('records/', {rq: {'genus': 'acer'}, offset: 100, limit: 200}) do |results|
         #     puts results['itemCount']
         # end
         #
@@ -100,15 +100,14 @@ module Idigbio
         # @param sort [Array] should contain hashes in the format of {'fieldName': 'sortDirection'}
         # @return media search results in JSON format
         #
-        # results = idigbio.search_records(rq: {genus: 'acer'}, limit: 200)  
+        # results = idigbio.search_records({genus: 'acer'}, 200)  
         #
         # OR
         #
-        # idigbio.search_records(rq: {genus: 'acer'}, limit: 200) do |results|
+        # idigbio.search_records( {genus: 'acer'}, 200) do |results|
         #    puts results['itemCount']
         # end
         #
-
         def search_records(rq={}, limit=$max_limit, offset=0, fields=[], fields_exclude=[], sort=[])
             params={rq: rq, limit: limit, offset: offset}
             params[:fields]=fields unless fields.empty?
@@ -121,7 +120,6 @@ module Idigbio
                 return results
             end
         end
-
         ##
         # Search iDigBio media records 
         #
@@ -134,11 +132,11 @@ module Idigbio
         # @param sort [Array] should contain hashes in the format of {'fieldName': 'sortDirection'}
         # @return media search results in JSON format
         #
-        # results = idigbio.search_media(rq: {genus: 'acer'}, limit: 200)  
+        # results = idigbio.search_media({genus: 'acer'}, 200)  
         #
         # OR
         #
-        # idigbio.search_media(rq: {genus: 'acer'}, limit: 200) do |results|
+        # idigbio.search_media({genus: 'acer'}, 200) do |results|
         #    puts results['itemCount']
         # end
         #
@@ -154,7 +152,6 @@ module Idigbio
                 return results
             end
         end
-
         ##
         # Get a specimen record with uuid
         #
@@ -165,6 +162,7 @@ module Idigbio
         def view_record(uuid='')
             query('view/records/'+uuid,{},'get')
         end
+        alias_method :get_record, :view_record
         ##
         # Get a media record with uuid
         #
@@ -175,6 +173,7 @@ module Idigbio
         def view_media(uuid='')
             query('view/mediarecords/'+uuid,{},'get')
         end
+        alias_method :get_media, :view_media
         ##
         # Get a recordset record with uuid
         #
@@ -185,6 +184,7 @@ module Idigbio
         def view_recordset(uuid='')
             query('view/recordsets/'+uuid,{},'get')
         end
+        alias_method :get_recordset, :view_recordset
         ##
         # Get a publisher record with uuid
         #
@@ -195,6 +195,7 @@ module Idigbio
         def view_publisher(uuid='')
             query('view/publishers/'+uuid,{},'get')
         end
+        alias_method :get_publisher, :view_publisher
         ##
         # Gets total number of records matching rq
         #
@@ -236,15 +237,21 @@ module Idigbio
         end
 
         def date_histogram(rq={}, top_fields=[], count=10, date_field='', min_date='', max_date='', date_interval='')
-
+            params={}
+            query('summary/datehist/',params)
         end
 
         def stats(t='api', recordset='', min_date='', max_date='', date_interval='')
-
+            params={}
+            query('summary/stats/'+t,params)
         end
-
+        ##
+        # Get list of field mappings in API
+        #
+        # @param type [String] index type to get mapping for can be (records[default]|mediarecords|recordsets|publishers)
+        # @return [Hash] of field mappings
         def fields(type='records')
-
+            query('meta/fields/'+type)
         end
     end
 end

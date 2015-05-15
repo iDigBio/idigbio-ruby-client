@@ -1,6 +1,6 @@
 require 'minitest/autorun'
 require '../lib/client'
-
+require 'mechanize'
 
 class TestClient < Minitest::Test
     def setup
@@ -47,5 +47,13 @@ class TestClient < Minitest::Test
 
     def test_count_media
         assert @client.count_media({genus: 'puma'}) >= 1 
+    end
+
+    def test_records_last_modified
+        assert @client.modified_records({genus: 'acer'}).key? "lastModified" 
+    end
+
+    def test_media_last_modified
+        assert @client.modified_media({genus: 'acer'}).key? "lastModified"
     end
 end

@@ -1,4 +1,3 @@
-#require 'mechanize'
 require 'httparty'
 require 'json'
 #require 'pry-byebug'
@@ -7,6 +6,7 @@ $max_limit = 100000
 class Hash
     def symbolize
         self.keys.each{|k| self[k.to_sym]=self.delete k}
+        self
     end
 end
 
@@ -25,30 +25,30 @@ module Idigbio
         # @param params [Hash] of parameters to be passed to API (converted to JSON for POST queries)
         # @param method [String] HTTP method to use ('get' or 'post'[default])
         #
-        def query(path='', params={}, method='post')
+        def query(path='', params={}, defaults={}, method='post')
+            defaults.merge!(params.symbolize)
+            #binding.pry
             begin
                 if(method.downcase=='post')
                     #resp = @client.post(@host+path, params.to_json, 'Content-Type' => 'application/json')
-                    resp = HTTParty.post(@host+path, {:body => params.to_json,:headers => {'Content-Type' => 'application/json'}})
+                    resp = HTTParty.post(@host+path, {:body => defaults.to_json,:headers => {'Content-Type' => 'application/json'}})
                 elsif(method.downcase=='get')
                     #resp = @client.get(@host+path, params, nil, {'Content-Type' => 'application/json'})
-                    resp = HTTParty.get(@host+path,{:query => params, :headers => {'Content-Type' => 'application/json'}})
+                    resp = HTTParty.get(@host+path,{:query => defaults, :headers => {'Content-Type' => 'application/json'}})
+                else
+                  raise 'Method not recognized'
                 end
 
-                if block_given?
-                    yield JSON.parse resp.body
-                else
-                    return JSON.parse resp.body
-                end
+                block_given? ? yield(JSON.parse resp.body) : JSON.parse(resp.body)
+
             rescue HTTParty::Error => e
                 puts e
                 raise 
             end
         end 
 
-        public
         ##
-        # Performs basic search against iDigBio API.    
+        # Performs paged search against iDigBio API.    
         #
         # @param path [String] the index to search 'records/' or 'media/'
         # @param params [Hash] the parameters for the given search as documents in the API wiki
@@ -61,17 +61,15 @@ module Idigbio
         #
         # results = idigbio.search(path:'records/', params)
         #
-        def search(path='records/', params={})
-            params.symbolize
-            params[:rq]={} unless params.key? :rq 
-            params[:limit]=$max_limit unless params.key? :limit
-            params[:offset]=0 unless params.key? :offset
+        def search(path='records/', params={}, defaults={})
+            defaults.merge!(params.symbolize)
             limit=params[:limit]
             results={}
             items=[]
             more=true
+            #binding.pry
             begin 
-                query('search/'+path,params) do |resp|
+                query('search/'+path,defaults) do |resp|
                     if resp['itemCount'] > 0
                         items.concat resp['items']
                     end
@@ -87,12 +85,10 @@ module Idigbio
                 end
             end while more 
 
-            if block_given?
-                yield results
-            else
-                return results
-            end
+            block_given? ? yield(results) : results
         end
+
+        public
         ##
         # Search iDigBio specimen records 
         # 
@@ -112,17 +108,9 @@ module Idigbio
         #    puts results['itemCount']
         # end
         #
-        def search_records(rq={}, limit=$max_limit, offset=0, fields=[], fields_exclude=[], sort=[])
-            params={rq: rq, limit: limit, offset: offset}
-            params[:fields]=fields unless fields.empty?
-            params[:fields_exclude]=fields_exclude unless fields_exclude.empty? 
-            params[:sort]=sort unless sort.empty? 
-            results = search('records/', params)
-            if block_given?
-                yield results
-            else
-                return results
-            end
+        def search_records(opts={})
+            results = search('records/', opts, {rq: {}, limit: $max_limit, offset: 0})
+            block_given? ? yield(results) : results
         end
         ##
         # Search iDigBio media records 
@@ -144,17 +132,9 @@ module Idigbio
         #    puts results['itemCount']
         # end
         #
-        def search_media(rq={}, mq={}, limit=$max_limit, offset=0, fields=[], fields_exclude=[], sort=[])
-            params={rq: rq, mq: {}, limit: limit, offset: offset}
-            params[:fields]=fields unless fields.empty?
-            params[:fields_exclude]=fields_exclude unless fields_exclude.empty? 
-            params[:sort]=sort unless sort.empty? 
-            results = search('media/', params)
-            if block_given?
-                yield results
-            else
-                return results
-            end
+        def search_media(opts={})
+            results = search('media/', opts, {rq: {}, mq: {}, limit: $max_limit, offset: 0})
+            block_given? ? yield(results) : results
         end
         ##
         # Get a specimen record with uuid
@@ -165,7 +145,7 @@ module Idigbio
         # record = idigbio.view_record('8a0c0ea9-4b10-44a7-8a0d-ab4e12d9f607')
         #
         def view_record(uuid='')
-            query('view/records/'+uuid,{},'get')
+            query('view/records/'+uuid,{},{},'GET')
         end
         alias_method :get_record, :view_record
         ##
@@ -177,7 +157,7 @@ module Idigbio
         # record = idigbio.view_media('1ef39c60-ccda-4431-8a2e-8eba5203c6b4')
         #
         def view_media(uuid='')
-            query('view/mediarecords/'+uuid,{},'get')
+            query('view/mediarecords/'+uuid,{},{},'GET')
         end
         alias_method :get_media, :view_media
         ##
@@ -189,7 +169,7 @@ module Idigbio
         # record = idigbio.view_recordset('b3976394-a174-4ceb-8d64-3a435d66bde6')
         #
         def view_recordset(uuid='')
-            query('view/recordsets/'+uuid,{},'get')
+            query('view/recordsets/'+uuid,{},{},'GET')
         end
         alias_method :get_recordset, :view_recordset
         ##
@@ -201,7 +181,7 @@ module Idigbio
         # record = idigbio.view_publisher('4e1beef9-d7c0-4ac0-87df-065bc5a55361')
         #
         def view_publisher(uuid='')
-            query('view/publishers/'+uuid,{},'get')
+            query('view/publishers/'+uuid,{},{},'GET')
         end
         alias_method :get_publisher, :view_publisher
         ##
@@ -210,8 +190,8 @@ module Idigbio
         # @param rq [Hash] record query params
         # @return [Fixnum] record count
         #
-        def count_records(rq={})
-            query('summary/count/records/', {rq: rq})['itemCount']
+        def count_records(opts={})
+            query('summary/count/records/', opts, {rq: {}})['itemCount']
         end
         ##
         # Gets total number of media records matching rq and mq
@@ -220,29 +200,25 @@ module Idigbio
         # @param mq [Hash]
         # @return [Fixnum] media record count
         #
-        def count_media(rq={}, mq={})
-            query('summary/count/media/', {rq: rq, mq: mq})['itemCount']
+        def count_media(opts={})
+            query('summary/count/media/', opts, {rq: {}, mq: {}})['itemCount']
         end
         ##
         # 
-        def top_records(rq={}, top_fields=[], count=10)
-            params={rq: rq, count: count}
-            params[:top_fields] = top_fields unless top_fields.empty?
-            query('summary/top/records/', params)
+        def top_records(opts={})
+            query('summary/top/records/', opts, {rq: {}, count: 10})
         end
 
-        def top_media(rq={}, mq={}, top_fields=[], count=10)
-            params={rq: rq, mq: {}, count: count}
-            params[:top_fields] = top_fields unless top_fields.empty?
-            query('summary/top/media/', params)
+        def top_media(opts={})
+            query('summary/top/media/', opts, {rq: {}, mq: {}, count: 10})
         end
         ##
         # Gets last modified date of items matching this query
         # @param rq [Hash] API record query params
         # @return [Hash] with lastModified and itemCount keys for matching query
         #
-        def modified_records(rq={})
-            query('summary/modified/records/',{rq: rq})
+        def modified_records(opts={})
+            query('summary/modified/records/', opts, {rq: {}})
         end
         ##
         # Gets last modified date of items matching this query
@@ -250,12 +226,12 @@ module Idigbio
         # @param mq [Hash] API media query params
         # @return [Hash] with lastModified and itemCount keys for matching query
         #
-        def modified_media(rq={}, mq={})
-            query('summary/modified/media/',{rq: rq, mq: mq})
+        def modified_media(opts={})
+            query('summary/modified/media/', opts, {rq: {}, mq: {}})
         end
 
         def date_histogram(rq={}, top_fields=[], count=10, date_field='', min_date='', max_date='', date_interval='')
-            params={}
+            params={rq: {}, count: 10}
             query('summary/datehist/',params)
         end
 

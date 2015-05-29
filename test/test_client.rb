@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require '../lib/client'
+require './client'
 
 class TestClient < Minitest::Test
   def setup

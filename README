@@ -1,4 +1,4 @@
 iDigBio Ruby Client
-=============
+===================
 
-[![Continuous Integration Status][ci_badge]][ci_link]
+[![Build Status](https://travis-ci.org/iDigBio/idigbio-ruby-client.svg?branch=master)](https://travis-ci.org/iDigBio/idigbio-ruby-client)

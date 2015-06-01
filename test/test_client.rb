@@ -1,5 +1,7 @@
+$LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 require 'minitest/autorun'
-require './client'
+require 'client'
+
 
 class TestClient < Minitest::Test
   def setup
